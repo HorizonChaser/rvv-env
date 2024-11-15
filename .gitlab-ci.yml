@@ -1,0 +1,49 @@
+build-image:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+
+  parallel:
+    matrix:
+      - TARGET:
+        - upstream
+        - patched
+  variables:
+    DOCKER_TAG: latest
+    DOCKER_IMAGE_NAME: ${CI_REGISTRY_IMAGE}/${TARGET}:${DOCKER_TAG}
+    CACHE_IMAGE: ${CI_REGISTRY_IMAGE}/cache
+
+    # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      variables:
+        DOCKER_TAG: $CI_COMMIT_REF_SLUG
+    - if: "$CI_PIPELINE_SOURCE == 'schedule'"
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - if: "$CI_COMMIT_TAG"
+
+  before_script:
+    # Log in to the GitLab container registry
+    - echo "${CI_REGISTRY_PASSWORD}" | docker login
+        -u "${CI_REGISTRY_USER}"
+        --password-stdin
+        "${CI_REGISTRY}"
+  script:
+    - docker context create my-builder
+    - docker buildx create my-builder --driver docker-container --use
+    - docker buildx build
+        --pull --push
+        --cache-from type=registry,ref=${CACHE_IMAGE}/upstream:latest
+        --cache-from type=registry,ref=${CACHE_IMAGE}/upstream:${DOCKER_TAG}
+        --cache-from type=registry,ref=${CACHE_IMAGE}/patched:latest
+        --cache-from type=registry,ref=${CACHE_IMAGE}/patched:${DOCKER_TAG}
+        --cache-to type=registry,ref=${CACHE_IMAGE}/${TARGET}:${DOCKER_TAG},mode=max,compression=zstd
+        --output type=registry,compression=zstd
+        --target ${TARGET}
+        --tag ${DOCKER_IMAGE_NAME}
+        ${DOCKER_BUILD_FLAGS}
+        .

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+################################################################################
+# Prepare target rootfs by pulling and extracting a Docker image for the target
+# architecture.
+#
+# By default it uses Pixman CI image, which has a development environment
+# required to build Pixman for RISC-V (Meson, GNU and LLVM toolchain). If you
+# wish to use a different image, pass its name as an argument to this script.
+#
+# Authors:
+#   Marek Pikuła <m.pikula@partner.samsung.com>
+################################################################################
+
+set -e
+
+TARGET_IMAGE=${1:-registry.freedesktop.org/pixman/pixman/pixman:latest-linux-riscv64}
+TARGET_DIR=/target
+TARGET_IMAGE_CACHE=${TARGET_DIR}/cache
+TARGET_ARCHIVE=${TARGET_DIR}/target.tar
+
+mkdir -p "${TARGET_DIR}"
+
+echo "Pulling target image from \"${TARGET_IMAGE}\"..."
+# Cache dir registry is uses so that the script is faster on subsequent runs.
+skopeo copy "docker://${TARGET_IMAGE}" "dir:${TARGET_IMAGE_CACHE}"
+
+echo "Extracting target image..."
+skopeo copy "dir:${TARGET_IMAGE_CACHE}" "docker-archive:${TARGET_ARCHIVE}"
+undocker "${TARGET_ARCHIVE}" - | sudo tar -xC "${TARGET_DIR}"
+sudo chown "$(whoami):$(whoami)" "${TARGET_DIR}"
+rm -f "${TARGET_ARCHIVE}"
+
+mkdir -p "${TARGET_DIR}/work"
+
+echo "Done"
