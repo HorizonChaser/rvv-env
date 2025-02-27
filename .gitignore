@@ -1,4 +1,5 @@
 .vscode/
+.vscode-ctags
 
-target/**/*
-!target/.keep
+work/**/*
+!work/.keep

@@ -4,46 +4,41 @@ build-image:
   services:
     - docker:dind
 
+  # Sometimes there is a race with OAuth token when trying to push to registry.
+  retry: 1
+
   parallel:
     matrix:
-      - TARGET:
-        - upstream
-        - patched
+      - VARIANT:
+          - host-patched
+          - host-upstream
+          - target-debian
+          - target-pixman
+          - target-ubuntu
   variables:
-    DOCKER_TAG: latest
-    DOCKER_IMAGE_NAME: ${CI_REGISTRY_IMAGE}/${TARGET}:${DOCKER_TAG}
-    CACHE_IMAGE: ${CI_REGISTRY_IMAGE}/cache
+    IMAGE_TAG: latest
 
-    # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+    # Use TLS https://docs.gitlab.com/ci/docker/using_docker_build/#docker-in-docker-with-tls-enabled-in-the-docker-executor
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
 
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
       variables:
-        DOCKER_TAG: $CI_COMMIT_REF_SLUG
+        IMAGE_TAG: $CI_COMMIT_REF_SLUG
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
     - if: "$CI_COMMIT_TAG"
 
   before_script:
-    # Log in to the GitLab container registry
+    # Log in to the GitLab container registry.
     - echo "${CI_REGISTRY_PASSWORD}" | docker login
         -u "${CI_REGISTRY_USER}"
         --password-stdin
         "${CI_REGISTRY}"
+    # Install bash so that we can execute the build script.
+    - apk add --no-cache bash
   script:
     - docker context create my-builder
     - docker buildx create my-builder --driver docker-container --use
-    - docker buildx build
-        --pull --push
-        --cache-from type=registry,ref=${CACHE_IMAGE}/upstream:latest
-        --cache-from type=registry,ref=${CACHE_IMAGE}/upstream:${DOCKER_TAG}
-        --cache-from type=registry,ref=${CACHE_IMAGE}/patched:latest
-        --cache-from type=registry,ref=${CACHE_IMAGE}/patched:${DOCKER_TAG}
-        --cache-to type=registry,ref=${CACHE_IMAGE}/${TARGET}:${DOCKER_TAG},mode=max,compression=zstd
-        --output type=registry,compression=zstd
-        --target ${TARGET}
-        --tag ${DOCKER_IMAGE_NAME}
-        ${DOCKER_BUILD_FLAGS}
-        .
+    - ./oci-build.sh ${VARIANT} ${DOCKER_BUILD_FLAGS}

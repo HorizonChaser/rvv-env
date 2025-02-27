@@ -1,96 +1,76 @@
 
- Check for Docker:
+ Check for an OCI runner:
 
-+ docker version
-Client:
- Version:           27.5.1
- API version:       1.47
- Go version:        go1.23.5
- Git commit:        9f9e405801
- Built:             Tue Jan 28 21:43:20 2025
- OS/Arch:           linux/amd64
- Context:           default
++ podman version
+Client:       Podman Engine
+Version:      5.3.2
+API Version:  5.3.2
+Go Version:   go1.23.4
+Built:        Wed Jan 22 01:00:00 2025
+OS/Arch:      linux/amd64
 
-Server:
- Engine:
-  Version:          27.5.1
-  API version:      1.47 (minimum version 1.24)
-  Go version:       go1.23.5
-  Git commit:       4c9b3b011a
-  Built:            Tue Jan 28 21:43:20 2025
-  OS/Arch:          linux/amd64
-  Experimental:     false
- containerd:
-  Version:          v2.0.2
-  GitCommit:        c507a0257ea6462fbd6f5ba4f5c74facb04021f4.m
- runc:
-  Version:          1.2.5
-  GitCommit:
- docker-init:
-  Version:          0.19.0
-  GitCommit:        de40ad0
+ Prepare the environment:
 
- Prepare environment:
-
-+ git clone https://gitlab.com/riseproject/rvv-env.git
++ git clone https://gitlab.com/riseproject/rvv-env.git -b main
 Cloning into 'rvv-env'...
-remote: Enumerating objects: 163, done.
-remote: Counting objects: 100% (46/46), done.
-remote: Compressing objects: 100% (43/43), done.
-remote: Total 163 (delta 26), reused 6 (delta 2), pack-reused 117 (from 1)
-Receiving objects: 100% (163/163), 49.91 KiB | 12.48 MiB/s, done.
+remote: Enumerating objects: 143, done.
+remote: Counting objects: 100% (130/130), done.
+remote: Compressing objects: 100% (124/124), done.
+remote: Total 143 (delta 64), reused 0 (delta 0), pack-reused 13 (from 1)
+Receiving objects: 100% (143/143), 100.80 KiB | 3.48 MiB/s, done.
+Resolving deltas: 100% (65/65), done.
 + cd rvv-env
 + source env.sh
+++++ realpath env.sh
++++ dirname ...
+++ PATH=...
+++ export PATH
++ export IMAGE_VARIANT_TARGET=target-pixman
++ IMAGE_VARIANT_TARGET=target-pixman
 
- Pull the Docker image:
+ Pull the OCI images:
 
-+ ./docker-pull.sh
-latest: Pulling from riseproject/rvv-env/patched
-5a7813e071bf: Already exists
-f8bb486dfb69: Pull complete
-2f88d84470a6: Pull complete
-aa4064159662: Pull complete
-c51c721e259a: Pull complete
-7125de0cdd9d: Pull complete
-a5b98cb73a8a: Pull complete
-c2b629bcc092: Pull complete
-Digest: sha256:5b5b42fb5864e91538839c3bfb57649375d9efc1055136c2f723aa42f10916b8
-Status: Downloaded newer image for registry.gitlab.com/riseproject/rvv-env/patched:latest
-registry.gitlab.com/riseproject/rvv-env/patched:latest
-
- Prepare target rootfs:
-
-+ target-prepare-rootfs
-Pulling target image from "registry.freedesktop.org/pixman/pixman/pixman:latest-linux-riscv64"...
++ ./oci-pull.sh
+Trying to pull registry.gitlab.com/riseproject/rvv-env/host-patched:latest...
 Getting image source signatures
-Copying blob 6c2396fb7e34 done   |
-Copying blob ddf52c3af23c done   |
-Copying blob 70b70c11b5ce done   |
-Copying blob ce9e88bcf544 done   |
-Copying config 06721d91eb done   |
+Copying blob 84fc9561401f skipped: already exists
+Copying blob 53308a56a979 skipped: already exists
+Copying blob 5a7813e071bf skipped: already exists
+Copying blob 12fbdc6d4f20 skipped: already exists
+Copying blob 0951f1c581e0 skipped: already exists
+Copying blob cd41edf632b3 skipped: already exists
+Copying blob e47699a913bf skipped: already exists
+Copying config f39e031bd1 done   |
 Writing manifest to image destination
-Extracting target image...
+f39e031bd1ee1e4d05ee6325f1952a3aa3b0a4a7f9b0cb9da81581755015a3be
+Trying to pull registry.gitlab.com/riseproject/rvv-env/target-pixman:latest...
 Getting image source signatures
-Copying blob 70b70c11b5ce done   |
-Copying blob ddf52c3af23c done   |
-Copying blob ce9e88bcf544 done   |
-Copying blob 6c2396fb7e34 done   |
-Copying config 06721d91eb done   |
-Writing manifest to image destinationWriting manifest to image destination
-Done
+Copying blob c3c4d7fb7144 skipped: already exists
+Copying blob ce9e88bcf544 skipped: already exists
+Copying blob 70b70c11b5ce skipped: already exists
+Copying blob 6c2396fb7e34 skipped: already exists
+Copying blob 8f3f49113c0e skipped: already exists
+Copying blob 9634d67329cf skipped: already exists
+Copying blob ddf52c3af23c skipped: already exists
+Copying config f951cc033c done   |
+Writing manifest to image destination
+f951cc033c112350d9e2223206745163d7e52ce7dbac13fe37e114e61bba3667
+
+ Check if the target works:
+
 + target-run uname -a
-Linux 53bd7c70baf4 6.13.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Mon, 17 Feb 2025 17:42:11 +0000 riscv64 GNU/Linux
+Linux target-pixman 6.12.15-200.fc41.x86_64 #1 SMP PREEMPT_DYNAMIC Tue Feb 18 15:24:05 UTC 2025 riscv64 GNU/Linux
 
  Build Pixman:
 
-+ cd target/work
-+ docker-run git clone https://gitlab.freedesktop.org/pixman/pixman.git
++ cd work
++ host-run git clone https://gitlab.freedesktop.org/pixman/pixman.git
 Cloning into 'pixman'...
 remote: Enumerating objects: 12880, done.
 remote: Counting objects: 100% (857/857), done.
 remote: Compressing objects: 100% (334/334), done.
 remote: Total 12880 (delta 518), reused 851 (delta 515), pack-reused 12023 (from 1)
-Receiving objects: 100% (12880/12880), 3.36 MiB | 4.79 MiB/s, done.
+Receiving objects: 100% (12880/12880), 3.36 MiB | 4.18 MiB/s, done.
 Resolving deltas: 100% (9737/9737), done.
 + cd pixman
 + target-run meson setup build
@@ -154,7 +134,7 @@ Found ninja-1.12.1 at /usr/bin/ninja
 INFO: autodetecting backend as ninja
 INFO: calculating backend command to run: /usr/bin/ninja -C /work/pixman/build
 ninja: Entering directory `/work/pixman/build'
-[33/148] Compiling C object pixman/libpixman-1.so.0.44.3.p/pixman.c.o
+[4/148] Compiling C object pixman/libpixman-1.so.0.44.3.p/pixman.c.o
 ../pixman/pixman.c: In function ‘pixman_image_fill_rectangles’:
 ../pixman/pixman.c:881:14: warning: ‘stack_boxes’ may be used uninitialized [-Wmaybe-uninitialized]
   881 |     result = pixman_image_fill_boxes (op, dest, color, n_rects, boxes);
@@ -165,19 +145,14 @@ ninja: Entering directory `/work/pixman/build'
 ../pixman/pixman.c:857:20: note: ‘stack_boxes’ declared here
   857 |     pixman_box32_t stack_boxes[6];
       |                    ^~~~~~~~~~~
-[58/148] Compiling C object test/matrix-test.p/matrix-test.c.o
-../test/matrix-test.c: In function ‘test_matrix’:
-../test/matrix-test.c:131:33: warning: variable ‘transform_ok’ set but not used [-Wunused-but-set-variable]
-  131 |         pixman_bool_t           transform_ok;
-      |                                 ^~~~~~~~~~~~
-[61/148] Compiling C object pixman/libpixman-1.so.0.44.3.p/pixman-glyph.c.o
+[8/148] Compiling C object pixman/libpixman-1.so.0.44.3.p/pixman-glyph.c.o
 ../pixman/pixman-glyph.c:408:1: warning: ‘force_align_arg_pointer’ attribute directive ignored [-Wattributes]
   408 | {
       | ^
 ../pixman/pixman-glyph.c:655:1: warning: ‘force_align_arg_pointer’ attribute directive ignored [-Wattributes]
   655 | {
       | ^
-[64/148] Compiling C object demos/composite-test.p/composite-test.c.o
+[37/148] Compiling C object demos/composite-test.p/composite-test.c.o
 ../demos/composite-test.c: In function ‘main’:
 ../demos/composite-test.c:122:5: warning: ‘gtk_table_new’ is deprecated: Use 'GtkGrid' instead [-Wdeprecated-declarations]
   122 |     table = gtk_table_new (G_N_ELEMENTS (operators) / 6, 6, TRUE);
@@ -207,20 +182,17 @@ In file included from /usr/include/gtk-3.0/gtk/gtk.h:187:
 /usr/include/gtk-3.0/gtk/gtkscrolledwindow.h:186:16: note: declared here
   186 | void           gtk_scrolled_window_add_with_viewport (GtkScrolledWindow *scrolled_window,
       |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[72/148] Compiling C object test/matrix-test.p/matrix-test.c.o
+../test/matrix-test.c: In function ‘test_matrix’:
+../test/matrix-test.c:131:33: warning: variable ‘transform_ok’ set but not used [-Wunused-but-set-variable]
+  131 |         pixman_bool_t           transform_ok;
+      |                                 ^~~~~~~~~~~~
 [148/148] Linking target test/affine-bench
 
  Start the debug session:
 
 + cd build
-+ target-run-rvv meson compile -C build
-INFO: autodetecting backend as ninja
-INFO: calculating backend command to run: /usr/bin/ninja -C /work/pixman/build
-ninja: Entering directory `/work/pixman/build'
-ninja: no work to do.
-
- Start the debug session:
-
-+ cd build
++ host-gdb
 + target-gdb-rvv test/stress-test
 GNU gdb (GDB) 16.0.50.20241213-git
 Copyright (C) 2024 Free Software Foundation, Inc.
@@ -238,63 +210,40 @@ Find the GDB manual and other documentation resources online at:
 For help, type "help".
 Type "apropos word" to search for commands related to "word".
 Remote debugging using :1234
-Reading symbols from /target/work/pixman/build/test/stress-test...
-Reading symbols from /target/lib/ld-linux-riscv64-lp64d.so.1...
-(No debugging symbols found in /target/lib/ld-linux-riscv64-lp64d.so.1)
-warning: BFD: warning: system-supplied DSO at 0x2aaaab2d0000 has a corrupt string table index
-0x00002aaaab2bb898 in ?? () from /target/lib/ld-linux-riscv64-lp64d.so.1
+Reading /work/pixman/build/test/stress-test from remote target...
+warning: File transfers from remote targets can be slow. Use "set sysroot" to access files locally instead.
+Reading /work/pixman/build/test/stress-test from remote target...
+Reading symbols from target:/work/pixman/build/test/stress-test...
+Reading /lib/ld-linux-riscv64-lp64d.so.1 from remote target...
+Reading /lib/ld-linux-riscv64-lp64d.so.1 from remote target...
+Reading symbols from target:/lib/ld-linux-riscv64-lp64d.so.1...
+(No debugging symbols found in target:/lib/ld-linux-riscv64-lp64d.so.1)
+warning: BFD: warning: system-supplied DSO at 0x7f1c5a1a6000 has a corrupt string table index
+0x00007f1c5a1b6898 in ?? () from target:/lib/ld-linux-riscv64-lp64d.so.1
 (gdb) b rvv_combine_add_ca_float
 Function "rvv_combine_add_ca_float" not defined.
 Make breakpoint pending on future shared library load? (y or [n]) y
 Breakpoint 1 (rvv_combine_add_ca_float) pending.
 (gdb) c
 Continuing.
-[New Thread 34.62]
-[New Thread 34.45]
-[New Thread 34.46]
-[New Thread 34.47]
-[New Thread 34.48]
-[New Thread 34.49]
-[New Thread 34.50]
-[New Thread 34.51]
-[New Thread 34.52]
-[New Thread 34.53]
-[New Thread 34.54]
-[New Thread 34.55]
-[New Thread 34.56]
-[New Thread 34.57]
-[New Thread 34.58]
-[New Thread 34.59]
-[New Thread 34.60]
-[New Thread 34.61]
-[New Thread 34.63]
-[New Thread 34.64]
-[New Thread 34.65]
-[New Thread 34.66]
-[New Thread 34.67]
-[New Thread 34.68]
-[New Thread 34.69]
-[New Thread 34.70]
-[New Thread 34.71]
-[New Thread 34.72]
-[New Thread 34.73]
-[New Thread 34.74]
-[New Thread 34.75]
-[New Thread 34.76]
-[New Thread 34.77]
-[New Thread 34.78]
-[New Thread 34.79]
-[New Thread 34.80]
-[New Thread 34.81]
-[New Thread 34.82]
-[New Thread 34.83]
-[New Thread 34.84]
-[New Thread 34.85]
-[New Thread 34.86]
-[New Thread 34.87]
-[Switching to Thread 34.62]
+Reading /work/pixman/build/test/../pixman/libpixman-1.so.0 from remote target...
+Reading /lib/riscv64-linux-gnu/libpng16.so.16 from remote target...
+Reading /lib/riscv64-linux-gnu/libm.so.6 from remote target...
+Error while mapping shared library sections:
+`target:/lib/riscv64-linux-gnu/libm.so.6': not in executable format: file format not recognized
+Reading /lib/riscv64-linux-gnu/libgomp.so.1 from remote target...
+Error while mapping shared library sections:
+`target:/lib/riscv64-linux-gnu/libgomp.so.1': not in executable format: file format not recognized
+Reading /lib/riscv64-linux-gnu/libc.so.6 from remote target...
+Error while mapping shared library sections:
+`target:/lib/riscv64-linux-gnu/libc.so.6': not in executable format: file format not recognized
+Reading /lib/riscv64-linux-gnu/libz.so.1 from remote target...
+Error while mapping shared library sections:
+`target:/lib/riscv64-linux-gnu/libz.so.1': not in executable format: file format not recognized
+[New Thread 3.276]
+...
 
-Thread 2 hit Breakpoint 1, rvv_combine_add_ca_float (imp=0x555555566b90, op=PIXMAN_OP_ADD, dest=0x2aaab45bbcd0, src=0x2aaab45bb370, mask=0x2aaab45bb820, n_pixels=75)
+Thread 1 hit Breakpoint 1, rvv_combine_add_ca_float (imp=0x555555566b90, op=PIXMAN_OP_ADD, dest=0x7f1c593f87d0, src=0x7f1c593f87b0, mask=0x7f1c593f87c0, n_pixels=1)
     at ../pixman/pixman-rvv.c:782
 782     RVV_MAKE_PD_COMBINERS (add, ONE, ONE)
 (gdb) info vector
@@ -311,56 +260,27 @@ v8             {q = {0x0, 0x0}, l = {0x0, 0x0, 0x0, 0x0}, w = {0x0, 0x0, 0x0, 0x
 Quit
 (gdb) disassemble
 Dump of assembler code for function rvv_combine_add_ca_float:
-=> 0x00002aaaab318a0e <+0>:     beqz    a5,0x2aaaab318aa0 <rvv_combine_add_ca_float+146>
-   0x00002aaaab318a10 <+2>:     slliw   a5,a5,0x2
-   0x00002aaaab318a14 <+6>:     beqz    a4,0x2aaaab318aa2 <rvv_combine_add_ca_float+148>
-   0x00002aaaab318a16 <+8>:     blez    a5,0x2aaaab318aa0 <rvv_combine_add_ca_float+146>
-   0x00002aaaab318a1a <+12>:    auipc   a1,0x8
-   0x00002aaaab318a1e <+16>:    flw     fa5,1858(a1) # 0x2aaaab32115c
-   0x00002aaaab318a22 <+20>:    sraiw   a1,a5,0x2
-   0x00002aaaab318a26 <+24>:    vsetvli a1,a1,e32,m1,ta,ma
-   0x00002aaaab318a2a <+28>:    vlseg4e32.v     v8,(a3)
-   0x00002aaaab318a2e <+32>:    vlseg4e32.v     v16,(a4)
-   0x00002aaaab318a32 <+36>:    vlseg4e32.v     v4,(a2)
-   0x00002aaaab318a36 <+40>:    vfmv.v.f        v1,fa5
-   0x00002aaaab318a3a <+44>:    slliw   a0,a1,0x2
-   0x00002aaaab318a3e <+48>:    subw    a5,a5,a0
-   0x00002aaaab318a40 <+50>:    slli    a0,a0,0x2
-   0x00002aaaab318a42 <+52>:    add     a3,a3,a0
-   0x00002aaaab318a44 <+54>:    add     a4,a4,a0
-   0x00002aaaab318a46 <+56>:    vfmul.vv        v12,v9,v17
-   0x00002aaaab318a4a <+60>:    vfmul.vv        v13,v16,v8
-   0x00002aaaab318a4e <+64>:    vfmul.vv        v3,v10,v18
-   0x00002aaaab318a52 <+68>:    vfmul.vv        v2,v11,v19
-   0x00002aaaab318a56 <+72>:    vfmul.vv        v15,v1,v5
-   0x00002aaaab318a5a <+76>:    vfmul.vv        v14,v1,v4
-   0x00002aaaab318a5e <+80>:    vfmul.vv        v11,v1,v6
-   0x00002aaaab318a62 <+84>:    vfmul.vv        v10,v1,v7
-   0x00002aaaab318a66 <+88>:    vfmul.vv        v8,v12,v1
-   0x00002aaaab318a6a <+92>:    vfmul.vv        v9,v13,v1
-   0x00002aaaab318a6e <+96>:    vfmul.vv        v3,v3,v1
-   0x00002aaaab318a72 <+100>:   vfmul.vv        v2,v2,v1
-   0x00002aaaab318a76 <+104>:   vfadd.vv        v8,v8,v15
-   0x00002aaaab318a7a <+108>:   vfadd.vv        v9,v9,v14
-   0x00002aaaab318a7e <+112>:   vfadd.vv        v3,v3,v11
-   0x00002aaaab318a82 <+116>:   vfadd.vv        v2,v2,v10
-   0x00002aaaab318a86 <+120>:   vfmin.vv        v5,v1,v8
-   0x00002aaaab318a8a <+124>:   vfmin.vv        v4,v1,v9
-   0x00002aaaab318a8e <+128>:   vfmin.vv        v6,v1,v3
-   0x00002aaaab318a92 <+132>:   vfmin.vv        v7,v1,v2
-   0x00002aaaab318a96 <+136>:   vsseg4e32.v     v4,(a2)
-   0x00002aaaab318a9a <+140>:   add     a2,a2,a0
-   0x00002aaaab318a9c <+142>:   bgtz    a5,0x2aaaab318a22 <rvv_combine_add_ca_float+20>
-   0x00002aaaab318aa0 <+146>:   ret
-   0x00002aaaab318aa2 <+148>:   blez    a5,0x2aaaab318aa0 <rvv_combine_add_ca_float+146>
-   0x00002aaaab318aa6 <+152>:   auipc   a4,0x8
-   0x00002aaaab318aaa <+156>:   flw     fa5,1718(a4) # 0x2aaaab32115c
+=> 0x00007f6c70931a0e <+0>:     beqz    a5,0x7f6c70931aa0 <rvv_combine_add_ca_float+146>
+   0x00007f6c70931a10 <+2>:     slliw   a5,a5,0x2
+   0x00007f6c70931a14 <+6>:     beqz    a4,0x7f6c70931aa2 <rvv_combine_add_ca_float+148>
+   0x00007f6c70931a16 <+8>:     blez    a5,0x7f6c70931aa0 <rvv_combine_add_ca_float+146>
+   0x00007f6c70931a1a <+12>:    auipc   a1,0x8
+   0x00007f6c70931a1e <+16>:    flw     fa5,1858(a1) # 0x7f6c7093a15c
+   0x00007f6c70931a22 <+20>:    sraiw   a1,a5,0x2
+   0x00007f6c70931a26 <+24>:    vsetvli a1,a1,e32,m1,ta,ma
+   0x00007f6c70931a2a <+28>:    vlseg4e32.v     v8,(a3)
+   0x00007f6c70931a2e <+32>:    vlseg4e32.v     v16,(a4)
+   0x00007f6c70931a32 <+36>:    vlseg4e32.v     v4,(a2)
+   0x00007f6c70931a36 <+40>:    vfmv.v.f        v1,fa5
+   0x00007f6c70931a3a <+44>:    slliw   a0,a1,0x2
+   0x00007f6c70931a3e <+48>:    subw    a5,a5,a0
+   0x00007f6c70931a40 <+50>:    slli    a0,a0,0x2
 --Type <RET> for more, q to quit, c to continue without paging--q
 Quit
 (gdb) q
 A debugging session is active.
 
-        Inferior 1 [process 34] will be killed.
+        Inferior 1 [process 3] will be killed.
 
 Quit anyway? (y or n) y
-qemu-riscv64: QEMU: Terminated via GDBstub
+qemu-riscv64-static: QEMU: Terminated via GDBstub

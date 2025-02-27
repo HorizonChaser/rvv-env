@@ -9,6 +9,11 @@
 #   Marek Pikuła <m.pikula@partner.samsung.com>
 ################################################################################
 
+CONTAINER_CMD=${CONTAINER_CMD:-docker}
+PIXMAN_GIT=${PIXMAN_GIT:-https://gitlab.freedesktop.org/pixman/pixman.git}
+RVVENV_GIT=${RVVENV_GIT:-https://gitlab.com/riseproject/rvv-env.git}
+RVVENV_BRANCH=${RVVENV_BRANCH:-main}
+
 set -e
 shopt -s expand_aliases
 
@@ -19,28 +24,29 @@ _echo_stage() {
 }
 alias echo_stage='{ set +x; } 2>/dev/null; _echo_stage'
 
-echo_stage "Check for Docker:"
-docker version
+echo_stage "Check for an OCI runner:"
+${CONTAINER_CMD} version
 
-echo_stage "Prepare environment:"
-git clone https://gitlab.com/riseproject/rvv-env.git
+echo_stage "Prepare the environment:"
+git clone "${RVVENV_GIT}" -b "${RVVENV_BRANCH}"
 cd rvv-env
 source env.sh
+export IMAGE_VARIANT_TARGET=target-pixman
 
-echo_stage "Pull the Docker image:"
-./docker-pull.sh
+echo_stage "Pull the OCI images:"
+./oci-pull.sh
 
-echo_stage "Prepare target rootfs:"
-target-prepare-rootfs
+echo_stage "Check if the target works:"
 target-run uname -a
 
 echo_stage "Build Pixman:"
-cd target/work
-docker-run git clone https://gitlab.freedesktop.org/pixman/pixman.git
+cd work
+host-run git clone "${PIXMAN_GIT}"
 cd pixman
 target-run meson setup build
 target-run meson compile -C build
 
 echo_stage "Start the debug session:"
 cd build
-target-gdb-rvv test/stress-test
+target-gdb-rvv test/stress-test &
+host-gdb
