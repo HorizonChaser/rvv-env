@@ -150,6 +150,13 @@ if [[ "${BASENAME}" =~ ^host-gdb$ ]]; then
             -ex "set sysroot target:/" \
             -ex "target remote :${QEMU_GDB_PORT}" \
             "$@"
+elif [[ "${BASENAME}" =~ ^host-pwndbg$ ]]; then
+    container_run \
+        --rm \
+        /work/bin/pwndbg \
+            -ex "set sysroot target:/" \
+            -ex "target remote :${QEMU_GDB_PORT}" \
+            "$@"
 elif [[ "${BASENAME}" =~ ^target-gdb ]]; then
     # Run detached container without GDB so that entrypoint script bootstraps
     # the environment.
